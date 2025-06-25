@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.3.0] - 2025-06-25 - Limpeza Final e Consolidação
+
+### 🧹 Limpeza Completa do Projeto
+- ✅ **Arquivos obsoletos removidos**:
+  - `voice_assistant_devboard.py` (duplicado da raiz)
+  - `deploy_devboard.sh` (substituído por `devboard/install.sh`)
+  - `setup_network.sh` (integrado no `devboard/install.sh`)
+  - `remote_manager.sh` (substituído por `devboard/remote.sh`)
+  - `check_project.sh` (funcionalidade desnecessária)
+
+### 📝 Documentação Corrigida
+- ✅ **README.md principal** - Estrutura corrompida corrigida
+- ✅ **Badges organizados** - Headers e links corrigidos
+- ✅ **Estrutura de projeto atualizada** - Reflete organização atual
+- ✅ **Scripts documentados corretamente** - Separação clara entre desktop e Dev Board
+
+### 🎯 Estrutura Final Consolidada
+- ✅ **Raiz**: Apenas arquivos essenciais (`voice_assistant.py`, `setup.sh`, `run.sh`)
+- ✅ **Pasta devboard/**: Todos os arquivos específicos do Dev Board organizados
+- ✅ **Eliminação de redundâncias**: Código duplicado removido
+- ✅ **Responsabilidades claras**: Cada script com função específica
+
 ## [1.2.0] - 2025-06-25 - Organização e Otimização
 
 ### �️ Reorganização do Projeto

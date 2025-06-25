@@ -1,27 +1,8 @@
 # 🚗 Assistente de Voz para Carro
 
 ![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)## 📁 Estrutura do Projeto
-
-```
-assistente-voz-carro/
-├── voice_assistant.py          # 🎯 Código principal do assistente
-├── setup.sh                   # ⚙️ Script de configuração completa
-├── run.sh                     # 🚀 Script de execução rápida
-├── requirements.txt           # 📦 Dependências Python
-├── README.md                  # 📚 Documentação principal
-├── CHANGELOG.md               # 📝 Histórico de versões
-├── LICENSE                    # 📄 Licença MIT
-├── .gitignore                # 🧹 Configuração Git
-└── devboard/                  # 📟 Arquivos específicos do Dev Board
-    ├── README.md              # 📚 Guia rápido Dev Board
-    ├── DEPLOY.md              # 📟 Deploy detalhado
-    ├── TROUBLESHOOTING.md     # 🔧 Solução de problemas
-    ├── install.sh             # 🚀 Instalação automática
-    ├── manage.sh              # 🔧 Gerenciamento local
-    ├── remote.sh              # 📡 Gerenciamento remoto
-    └── voice_assistant_devboard.py # 📟 Versão otimizada
-```://img.shields.io/badge/platform-linux-lightgrey.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Platform](https://img.shields.io/badge/platform-linux-lightgrey.svg)
 ![Dev Board](https://img.shields.io/badge/Google_Dev_Board-AA1-orange.svg)
 
 Um assistente de voz inteligente desenvolvido para uso automotivo com comandos em português brasileiro. Projetado especificamente para Google Dev Board (AA1) com microfone M-305, mas compatível com qualquer sistema Linux.
@@ -33,8 +14,6 @@ Um assistente de voz inteligente desenvolvido para uso automotivo com comandos e
 - 🚗 **Focado em carro**: Comandos otimizados para uso durante direção
 - 🔊 **Vozes naturais**: Suporte a múltiplas engines TTS
 - ⚡ **Configuração fácil**: Script automatizado de instalação
-
-## 🚀 Início Rápido
 
 ## 🚀 Início Rápido
 
@@ -181,27 +160,35 @@ Veja a pasta `devboard/` para guias completos:
 ```
 assistente-voz-carro/
 ├── voice_assistant.py          # 🎯 Código principal do assistente
-├── voice_assistant_devboard.py # 📟 Versão otimizada para Dev Board
 ├── setup.sh                   # ⚙️ Script de configuração completa
 ├── run.sh                     # 🚀 Script de execução rápida
-├── deploy_devboard.sh         # 📟 Deploy automatizado para Dev Board
-├── setup_network.sh           # 📶 Configuração de rede do Dev Board
-├── remote_manager.sh          # 🔧 Gerenciamento remoto via SSH
 ├── requirements.txt           # 📦 Dependências Python
-├── README.md                  # 📚 Documentação principal
-├── DEVBOARD_DEPLOY.md         # 📟 Guia completo do Dev Board
-├── CHANGELOG.md               # 📝 Histórico de versões
-├── LICENSE                    # 📄 Licença MIT
-└── .gitignore                # 🧹 Configuração Git
+├── README.md                  # � Documentação principal
+├── CHANGELOG.md               # � Histórico de versões
+├── LICENSE                    # � Licença MIT
+├── .gitignore                # 🧹 Configuração Git
+└── devboard/                  # � Arquivos específicos do Dev Board
+    ├── README.md              # � Guia rápido Dev Board
+    ├── DEPLOY.md              # 📟 Deploy detalhado
+    ├── TROUBLESHOOTING.md     # � Solução de problemas
+    ├── install.sh             # 🚀 Instalação automática
+    ├── manage.sh              # � Gerenciamento local
+    ├── remote.sh              # 📡 Gerenciamento remoto
+    ├── utils.sh               # 🛠️ Funções compartilhadas
+    └── voice_assistant_devboard.py # 📟 Versão otimizada
 ```
 
 ### Scripts Principais
 
 - **`run.sh`** - Execução rápida do assistente (após configuração inicial)
 - **`setup.sh`** - Menu completo com configuração, testes e execução
-- **`deploy_devboard.sh`** - Deploy automatizado para Google Dev Board (AA1)
-- **`remote_manager.sh`** - Gerenciamento remoto do Dev Board via SSH
-- **`setup_network.sh`** - Configuração de WiFi/rede no Dev Board
+
+### Scripts do Dev Board (pasta `devboard/`)
+
+- **`install.sh`** - Instalação completa automatizada no Dev Board
+- **`manage.sh`** - Gerenciamento local no Dev Board
+- **`remote.sh`** - Gerenciamento remoto via SSH
+- **`utils.sh`** - Funções utilitárias compartilhadas
 
 ## 🔧 Dependências
 
