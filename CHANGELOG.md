@@ -1,6 +1,57 @@
 # Changelog
 
-## [1.0.0] - 2025-06-25
+## [1.2.0] - 2025-06-25 - Organização e Otimização
+
+### �️ Reorganização do Projeto
+- ✅ **Pasta devboard/**: Todos os arquivos relacionados ao Dev Board organizados
+- ✅ **Scripts consolidados**: 
+  - `devboard/install.sh` - Instalação completa e automatizada
+  - `devboard/manage.sh` - Gerenciamento local no Dev Board
+  - `devboard/remote.sh` - Gerenciamento remoto via SSH
+- ✅ **Documentação modular**:
+  - `devboard/README.md` - Guia rápido de uso
+  - `devboard/DEPLOY.md` - Instalação detalhada  
+  - `devboard/TROUBLESHOOTING.md` - Solução de problemas
+- ✅ **Limpeza do projeto**: Removidos arquivos redundantes e duplicados
+- ✅ **Estrutura clara**: Separação entre core do assistente e ambiente Dev Board
+
+### 🔧 Melhorias dos Scripts
+- ⚡ **install.sh**: Combina deploy, configuração de rede, setup de serviço
+- 🔧 **manage.sh**: Menu interativo para gerenciamento local completo
+- 📡 **remote.sh**: Administração remota via SSH com menu intuitivo
+- 🧹 **Eliminação de redundâncias**: Funções duplicadas unificadas
+
+## [1.1.0] - 2025-06-25 - Dev Board Release
+
+### 🚀 Novas Funcionalidades - Google Dev Board (AA1)
+- ✅ **Deploy automatizado**: Instalação no Dev Board
+- ✅ **Versão otimizada**: `voice_assistant_devboard.py` com otimizações específicas
+- ✅ **Auto-inicialização**: Serviço systemd para iniciar com o sistema
+- ✅ **Monitoramento de temperatura**: Proteção contra superaquecimento
+- ✅ **Configuração de rede**: Script `setup_network.sh` para WiFi/hotspot
+- ✅ **Gerenciamento remoto**: Script `remote_manager.sh` para administração via SSH
+- ✅ **Logs rotativos**: Prevenção de enchimento do SD card
+- ✅ **Recuperação automática**: Reinício em caso de falhas
+
+### 🔧 Melhorias do Sistema
+- ⚡ **Performance otimizada**: Configurações específicas para ambiente embarcado
+- 🌡️ **Monitoramento térmico**: Sistema de proteção contra superaquecimento
+- 📊 **Logging avançado**: Sistema de logs estruturado com rotação
+- 🔄 **Auto-recovery**: Sistema de recuperação automática de erros
+- 📶 **Conectividade robusta**: Verificação e reestabelecimento de conexão
+
+### 📋 Recursos para Carro
+- 🚗 **Inicialização inteligente**: Aguarda estabilização do sistema no carro
+- 🔊 **Áudio otimizado**: Configurações específicas para ambiente ruidoso
+- ⚡ **Economia de energia**: Gerenciamento inteligente de recursos
+- 🛡️ **Proteção de hardware**: Monitoramento de temperatura e memória
+
+### 📚 Documentação
+- 📖 **DEVBOARD_DEPLOY.md**: Guia completo de instalação no Dev Board
+- 🔧 **Scripts de automação**: Deploy, configuração e gerenciamento
+- 📊 **Monitoramento**: Ferramentas de status e diagnóstico
+
+## [1.0.0] - 2025-06-25 - Release Inicial
 
 ### Funcionalidades
 - ✅ Comando único: Wake word + comando na mesma frase

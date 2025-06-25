@@ -1,28 +1,28 @@
 # 🚗 Assistente de Voz para Carro
 
-![Python](https://img.shields.io/badge/python-v3.8+-blue.svg## 🛠️ Configuração Avançada
+![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)## 📁 Estrutura do Projeto
 
-### Instalação de Vozes Naturais
-Para melhorar a qualidade da síntese de voz:
-```bash
-./setup.sh
-# Escolha opção 2 para instalar vozes TTS de melhor qualidade
 ```
-
-### Teste do Sistema
-Para verificar microfone e vozes:
-```bash
-./setup.sh
-# Escolha opção 3 para testar microfone e vozes
-```
-
-### Execução Manual
-Se preferir executar diretamente:
-```bash
-source venv/bin/activate
-python3 voice_assistant.py
-```https://img.shields.io/badge/license-MIT-green.svg)
-![Platform](https://img.shields.io/badge/platform-linux-lightgrey.svg)
+assistente-voz-carro/
+├── voice_assistant.py          # 🎯 Código principal do assistente
+├── setup.sh                   # ⚙️ Script de configuração completa
+├── run.sh                     # 🚀 Script de execução rápida
+├── requirements.txt           # 📦 Dependências Python
+├── README.md                  # 📚 Documentação principal
+├── CHANGELOG.md               # 📝 Histórico de versões
+├── LICENSE                    # 📄 Licença MIT
+├── .gitignore                # 🧹 Configuração Git
+└── devboard/                  # 📟 Arquivos específicos do Dev Board
+    ├── README.md              # 📚 Guia rápido Dev Board
+    ├── DEPLOY.md              # 📟 Deploy detalhado
+    ├── TROUBLESHOOTING.md     # 🔧 Solução de problemas
+    ├── install.sh             # 🚀 Instalação automática
+    ├── manage.sh              # 🔧 Gerenciamento local
+    ├── remote.sh              # 📡 Gerenciamento remoto
+    └── voice_assistant_devboard.py # 📟 Versão otimizada
+```://img.shields.io/badge/platform-linux-lightgrey.svg)
+![Dev Board](https://img.shields.io/badge/Google_Dev_Board-AA1-orange.svg)
 
 Um assistente de voz inteligente desenvolvido para uso automotivo com comandos em português brasileiro. Projetado especificamente para Google Dev Board (AA1) com microfone M-305, mas compatível com qualquer sistema Linux.
 
@@ -127,24 +127,81 @@ Fale a **wake word** seguida do **comando** na mesma frase:
 # Escolha opção 3 para testar microfone e vozes
 ```
 
-## 📁 Estrutura do Projeto
+## � Deploy para Google Dev Board (AA1)
+
+### 🚀 Instalação Automática no Dev Board
+Para instalar permanentemente no Google Dev Board para uso no carro:
+
+1. **Conecte-se ao Dev Board:**
+   ```bash
+   ssh mendel@IP_DO_DEVBOARD
+   ```
+
+2. **Clone e execute o deploy:**
+   ```bash
+   git clone https://github.com/DaviBaechtold/Sistema-carro-voz.git
+   cd Sistema-carro-voz/devboard
+   chmod +x install.sh
+   ./install.sh
+   ```
+
+3. **Gerenciar localmente (no Dev Board):**
+   ```bash
+   ./manage.sh
+   ```
+
+4. **Reinicie o Dev Board:**
+   ```bash
+   sudo reboot
+   ```
+
+### 🔧 Gerenciamento Remoto
+Para gerenciar o assistente remotamente do seu computador:
+```bash
+cd devboard
+./remote.sh
+```
+
+### 📋 Características do Deploy no Dev Board:
+- ✅ **Auto-inicialização**: Inicia automaticamente com o sistema
+- ✅ **Monitoramento de temperatura**: Proteção contra superaquecimento  
+- ✅ **Logs rotativos**: Evita enchimento do SD card
+- ✅ **Recuperação automática**: Reinicia em caso de erro
+- ✅ **Otimizações para carro**: Configurações específicas para ambiente automotivo
+- ✅ **Gerenciamento remoto**: Scripts para monitoramento via SSH
+
+### 📖 Documentação Completa do Dev Board:
+Veja a pasta `devboard/` para guias completos:
+- [devboard/README.md](devboard/README.md) - Guia rápido de uso
+- [devboard/DEPLOY.md](devboard/DEPLOY.md) - Instalação detalhada
+- [devboard/TROUBLESHOOTING.md](devboard/TROUBLESHOOTING.md) - Solução de problemas
+
+## �📁 Estrutura do Projeto
 
 ```
 assistente-voz-carro/
-├── voice_assistant.py      # 🎯 Código principal do assistente
-├── setup.sh               # ⚙️ Script de configuração completa
-├── run.sh                 # 🚀 Script de execução rápida
-├── requirements.txt       # 📦 Dependências Python
-├── README.md              # 📚 Documentação
-├── LICENSE                # 📄 Licença MIT
-└── .gitignore            # 🧹 Configuração Git
+├── voice_assistant.py          # 🎯 Código principal do assistente
+├── voice_assistant_devboard.py # 📟 Versão otimizada para Dev Board
+├── setup.sh                   # ⚙️ Script de configuração completa
+├── run.sh                     # 🚀 Script de execução rápida
+├── deploy_devboard.sh         # 📟 Deploy automatizado para Dev Board
+├── setup_network.sh           # 📶 Configuração de rede do Dev Board
+├── remote_manager.sh          # 🔧 Gerenciamento remoto via SSH
+├── requirements.txt           # 📦 Dependências Python
+├── README.md                  # 📚 Documentação principal
+├── DEVBOARD_DEPLOY.md         # 📟 Guia completo do Dev Board
+├── CHANGELOG.md               # 📝 Histórico de versões
+├── LICENSE                    # 📄 Licença MIT
+└── .gitignore                # 🧹 Configuração Git
 ```
 
 ### Scripts Principais
 
 - **`run.sh`** - Execução rápida do assistente (após configuração inicial)
 - **`setup.sh`** - Menu completo com configuração, testes e execução
-- **`voice_assistant.py`** - Código principal (pode ser executado diretamente)
+- **`deploy_devboard.sh`** - Deploy automatizado para Google Dev Board (AA1)
+- **`remote_manager.sh`** - Gerenciamento remoto do Dev Board via SSH
+- **`setup_network.sh`** - Configuração de WiFi/rede no Dev Board
 
 ## 🔧 Dependências
 
