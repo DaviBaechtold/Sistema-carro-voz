@@ -2,7 +2,13 @@
 
 ![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Platform](https://img.shields.io/badge/platform-linux-lightgrey.svg)
+![Platform]    ├── DEPLOY.md              # 📖 Deploy detalhado manual
+    ├── TROUBLESHOOTING.md     # 🔧 Solução de problemas
+    ├── install.sh             # 🚀 Instalação automática
+    ├── manage.sh              # 🔧 Gerenciamento local
+    ├── remote.sh              # 📡 Gerenciamento remoto
+    ├── utils.sh               # 🛠️ Funções compartilhadas
+    └── voice_assistant_devboard.py # 📟 Versão otimizada//img.shields.io/badge/platform-linux-lightgrey.svg)
 ![Dev Board](https://img.shields.io/badge/Google_Dev_Board-AA1-orange.svg)
 
 Um assistente de voz inteligente desenvolvido para uso automotivo com comandos em português brasileiro. Projetado especificamente para Google Dev Board (AA1) com microfone M-305, mas compatível com qualquer sistema Linux.

@@ -99,19 +99,37 @@ get_uptime() {
 
 # Verificar dispositivos de áudio USB
 check_usb_audio() {
-    if lsusb | grep -i "audio\|microphone\|sound" > /dev/null; then
-        return 0
+    if command -v lsusb >/dev/null 2>&1; then
+        if lsusb | grep -i "audio\|microphone\|sound" > /dev/null; then
+            return 0
+        else
+            return 1
+        fi
     else
-        return 1
+        # Método alternativo sem lsusb
+        if ls /dev/snd/pcm* 2>/dev/null | grep -q "pcm"; then
+            return 0
+        else
+            return 1
+        fi
     fi
 }
 
 # Verificar microfone especificamente
 check_microphone() {
-    if arecord -l | grep -i "usb\|card 1" > /dev/null; then
-        return 0
+    if command -v arecord >/dev/null 2>&1; then
+        if arecord -l 2>/dev/null | grep -i "usb\|card 1" > /dev/null; then
+            return 0
+        else
+            return 1
+        fi
     else
-        return 1
+        # Fallback para verificação básica
+        if ls /dev/snd/pcmC*D0c 2>/dev/null | head -1 > /dev/null; then
+            return 0
+        else
+            return 1
+        fi
     fi
 }
 

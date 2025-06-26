@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.3.1] - 2025-06-26 - Consolidação e Correções Finais
+
+### 🔧 Consolidação de Scripts
+- ✅ **install.sh reescrito** - Arquivo corrompido corrigido e melhorado
+- ✅ **Funcionalidades consolidadas**:
+  - `quickfix.sh` → integrado no `install.sh`
+  - `fix-devboard.sh` → removido (redundante)
+  - Correção de GPG automática no `install.sh`
+- ✅ **Menu interativo** - Opções de instalação completa ou parcial
+- ✅ **Robustez melhorada** - Lida com falhas de repositório automaticamente
+
+### 🧹 Limpeza Adicional
+- ❌ **Arquivos removidos**: `quickfix.sh`, `fix-devboard.sh`, backups corrompidos
+- ✅ **Scripts otimizados** - Código limpo e sem duplicações
+- ✅ **Responsabilidades claras** - Cada script com função específica
+
+### 📋 Scripts Finais Consolidados
+- **`install.sh`** - Instalação completa com correções automáticas
+- **`manage.sh`** - Gerenciamento local (usa `utils.sh`)
+- **`remote.sh`** - Gerenciamento remoto via SSH
+- **`utils.sh`** - Funções compartilhadas (evita duplicação)
+
 ## [1.3.0] - 2025-06-25 - Limpeza Final e Consolidação
 
 ### 🧹 Limpeza Completa do Projeto

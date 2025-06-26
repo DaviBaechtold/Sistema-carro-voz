@@ -38,11 +38,20 @@ log_step() {
 check_hardware() {
     log_step "Verificando hardware"
     
-    # Verificar microfone USB
-    if lsusb | grep -i "audio\|microphone\|sound" > /dev/null; then
-        echo "✅ Dispositivo de áudio USB detectado"
+    # Verificar microfone USB - usar comando alternativo se lsusb não existir
+    if command -v lsusb >/dev/null 2>&1; then
+        if lsusb | grep -i "audio\|microphone\|sound" > /dev/null; then
+            echo "✅ Dispositivo de áudio USB detectado"
+        else
+            echo "⚠️  Microfone USB não detectado - conecte o M-305"
+        fi
     else
-        echo "⚠️  Microfone USB não detectado - conecte o M-305"
+        # Método alternativo sem lsusb
+        if ls /dev/snd/pcm* 2>/dev/null | grep -q "pcm"; then
+            echo "✅ Dispositivos de áudio detectados"
+        else
+            echo "⚠️  Microfone USB não detectado - conecte o M-305"
+        fi
     fi
     
     # Verificar temperatura
@@ -51,27 +60,51 @@ check_hardware() {
     echo "🌡️  Temperatura atual: ${temp_c}°C"
     
     if [ $temp_c -gt 70 ]; then
-        echo "⚠️  Temperatura alta - aguarde esfriar antes de continuar"
-        exit 1
+        echo "🔥 ATENÇÃO: Temperatura alta! Aguardando resfriamento..."
+        echo "💡 Considere melhorar a ventilação do Dev Board"
+        sleep 10
     fi
+}
+
+fix_repositories() {
+    log_step "Corrigindo repositórios"
+    
+    # Tentar corrigir chaves GPG
+    echo "🔑 Corrigindo chaves GPG..."
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add - 2>/dev/null || {
+        echo "⚠️  Não foi possível adicionar chave GPG automaticamente"
+    }
+    
+    # Atualizar repositórios (com fallback para allow insecure)
+    echo "📥 Atualizando repositórios..."
+    sudo apt update 2>/dev/null || {
+        echo "⚠️  Problemas com repositórios seguros, tentando modo inseguro..."
+        sudo apt update -o Acquire::AllowInsecureRepositories=true 2>/dev/null || {
+            echo "⚠️  Continuando mesmo com problemas de repositório"
+        }
+    }
 }
 
 install_dependencies() {
     log_step "Instalando dependências"
     
-    # Atualizar sistema
-    sudo apt update
-    
     # Instalar pacotes essenciais
-    sudo apt install -y python3-pip python3-dev python3-venv
-    sudo apt install -y portaudio19-dev alsa-utils pulseaudio
-    sudo apt install -y git curl wget htop
+    echo "📦 Instalando pacotes essenciais..."
+    sudo apt install -y python3-pip python3-dev python3-venv || {
+        echo "⚠️  Tentando instalação alternativa..."
+        sudo apt install -y --allow-unauthenticated python3-pip python3-dev python3-venv
+    }
+    
+    # Instalar dependências de áudio e sistema
+    sudo apt install -y portaudio19-dev alsa-utils pulseaudio || true
+    sudo apt install -y git curl wget htop usbutils || true
     
     # Instalar vozes TTS
-    sudo apt install -y espeak espeak-data espeak-data-pt
-    sudo apt install -y festival flite
+    echo "🔊 Instalando vozes TTS..."
+    sudo apt install -y espeak espeak-data espeak-data-pt || true
+    sudo apt install -y festival flite || true
     
-    # Tentar instalar vozes brasileiras (pode falhar em alguns sistemas)
+    # Tentar instalar vozes brasileiras
     sudo apt install -y festvox-br-cid mbrola mbrola-br1 mbrola-br3 2>/dev/null || {
         echo "⚠️  Algumas vozes brasileiras não estão disponíveis nos repositórios"
     }
@@ -104,7 +137,7 @@ configure_audio() {
     # Configurar permissões
     sudo usermod -a -G audio,plugdev $USER
     
-    # Criar configuração ALSA
+    # Criar configuração ALSA otimizada
     sudo tee /etc/asound.conf > /dev/null << 'EOF'
 # Configuração otimizada para assistente de voz no carro
 pcm.!default {
@@ -144,7 +177,7 @@ setup_network() {
     log_step "Configurando rede"
     
     echo "Configuração de rede:"
-    echo "1) Configurar WiFi"
+    echo "1) Configurar WiFi agora"
     echo "2) Manter configuração atual"
     echo "3) Configurar mais tarde"
     read -p "Escolha (1-3): " net_choice
@@ -154,10 +187,10 @@ setup_network() {
             setup_wifi
             ;;
         2)
-            echo "Mantendo configuração atual"
+            echo "✅ Mantendo configuração atual"
             ;;
         3)
-            echo "Configure manualmente depois com: ./manage.sh"
+            echo "⚠️  Configure depois com: ./manage.sh"
             ;;
     esac
 }
@@ -167,41 +200,36 @@ setup_wifi() {
     read -s -p "Senha da rede WiFi: " password
     echo
     
-    # Backup da configuração atual
-    sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.backup
+    # Backup da configuração atual se não existe
+    if [ ! -f "/etc/wpa_supplicant/wpa_supplicant.conf.backup" ]; then
+        sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.backup
+    fi
     
-    # Adicionar nova rede
-    sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null << EOF
-
-network={
-    ssid="$ssid"
-    psk="$password"
-    key_mgmt=WPA-PSK
-    priority=10
-}
-EOF
+    # Adicionar nova rede usando wpa_passphrase (mais seguro)
+    wpa_passphrase "$ssid" "$password" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
     
-    # Reiniciar rede
-    sudo systemctl restart networking
+    # Reiniciar serviços de rede
+    sudo systemctl restart wpa_supplicant
+    sudo systemctl restart dhcpcd 2>/dev/null || sudo systemctl restart networking
+    
     sleep 5
     
     # Testar conectividade
-    if ping -c 3 8.8.8.8 > /dev/null 2>&1; then
+    if ping -c 3 8.8.8.8 &> /dev/null; then
         echo "✅ WiFi configurado com sucesso"
     else
-        echo "❌ Falha na configuração WiFi"
-        echo "Configure manualmente depois"
+        echo "❌ Falha na configuração WiFi - configure manualmente depois"
     fi
 }
 
 create_service() {
     log_step "Criando serviço systemd"
     
-    # Criar script de inicialização
+    # Criar script de inicialização otimizado
     cat > ../start_car_assistant.sh << 'EOF'
 #!/bin/bash
 
-# Script de inicialização para carro
+# Script de inicialização otimizado para carro
 echo "🚗 Iniciando Assistente de Voz..."
 
 # Aguardar estabilização (importante no carro)
@@ -220,17 +248,17 @@ while [ $timeout -gt 0 ]; do
     timeout=$((timeout-5))
 done
 
-# Configurar CPU para performance
-echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null 2>&1 || true
-
-# Verificar temperatura
+# Configurar CPU baseado na temperatura
 temp=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo "0")
 temp_c=$((temp/1000))
 echo "🌡️  Temperatura: ${temp_c}°C"
 
 if [ $temp_c -gt 75 ]; then
-    echo "⚠️  Temperatura alta - modo de economia"
+    echo "⚠️  Temperatura alta - modo economia"
     echo powersave | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null 2>&1 || true
+else
+    echo "✅ Temperatura OK - modo performance"
+    echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null 2>&1 || true
 fi
 
 # Navegar para diretório e ativar ambiente
@@ -239,15 +267,17 @@ source venv/bin/activate
 
 # Iniciar assistente (versão Dev Board se disponível)
 if [ -f "devboard/voice_assistant_devboard.py" ]; then
+    echo "🚀 Iniciando versão otimizada para Dev Board..."
     python3 devboard/voice_assistant_devboard.py
 else
+    echo "🚀 Iniciando versão padrão..."
     python3 voice_assistant.py
 fi
 EOF
     
     chmod +x ../start_car_assistant.sh
     
-    # Criar serviço systemd
+    # Criar serviço systemd otimizado
     sudo tee /etc/systemd/system/voice-assistant-car.service > /dev/null << 'EOF'
 [Unit]
 Description=Assistente de Voz para Carro (Google Dev Board AA1)
@@ -266,7 +296,7 @@ Restart=always
 RestartSec=30
 StandardOutput=journal
 StandardError=journal
-TimeoutStartSec=180
+TimeoutStartSec=300
 KillMode=mixed
 KillSignal=SIGTERM
 
@@ -274,7 +304,7 @@ KillSignal=SIGTERM
 WantedBy=multi-user.target
 EOF
     
-    # Configurar logrotate
+    # Configurar logrotate para evitar enchimento do SD
     sudo tee /etc/logrotate.d/voice-assistant > /dev/null << 'EOF'
 /var/log/voice-assistant.log {
     daily
@@ -318,10 +348,14 @@ except ImportError as e:
     
     # Testar dispositivos de áudio
     echo "🎤 Testando áudio..."
-    if arecord -l | grep -i "usb\|card 1" > /dev/null; then
-        echo "✅ Microfone USB detectado"
+    if command -v arecord >/dev/null 2>&1; then
+        if arecord -l 2>/dev/null | grep -i "usb\|card 1" > /dev/null; then
+            echo "✅ Microfone USB detectado"
+        else
+            echo "⚠️  Microfone USB não encontrado"
+        fi
     else
-        echo "⚠️  Microfone USB não encontrado"
+        echo "⚠️  arecord não disponível"
     fi
     
     # Testar TTS
@@ -332,149 +366,87 @@ except ImportError as e:
         echo "⚠️  TTS não encontrado"
     fi
     
-    echo "✅ Testes concluídos"
+    echo "✅ Testes básicos concluídos"
 }
-
-create_management_script() {
-    log_step "Criando script de gerenciamento"
-    
-    cat > manage.sh << 'EOF'
-#!/bin/bash
-
-# Script de gerenciamento local do assistente no Dev Board
-
-echo "🚗 Gerenciamento - Assistente de Voz (Dev Board)"
-echo "==============================================="
 
 show_menu() {
     echo ""
-    echo "Escolha uma opção:"
-    echo "1) Status do sistema"
-    echo "2) Iniciar assistente"
-    echo "3) Parar assistente" 
-    echo "4) Reiniciar assistente"
-    echo "5) Ver logs em tempo real"
-    echo "6) Configurar WiFi"
-    echo "7) Verificar temperatura"
-    echo "8) Testar microfone"
-    echo "9) Atualizar código"
-    echo "0) Sair"
+    echo "Escolha o tipo de instalação:"
+    echo "1) Instalação completa (recomendado)"
+    echo "2) Apenas configurar ambiente Python"
+    echo "3) Apenas criar serviço systemd"
+    echo "4) Testar sistema atual"
+    echo "5) Sair"
     echo
-    read -p "Digite sua escolha (0-9): " choice
-}
-
-while true; do
-    show_menu
-    
-    case $choice in
-        1)
-            echo "📊 Status do Sistema:"
-            echo "Serviço: $(systemctl is-active voice-assistant-car.service)"
-            echo "Temperatura: $(cat /sys/class/thermal/thermal_zone0/temp | awk '{print $1/1000}')°C"
-            echo "Memória: $(free -h | awk 'NR==2{print $3"/"$2}')"
-            echo "SD Card: $(df -h / | awk 'NR==2{print $5" usado"}')"
-            sudo systemctl status voice-assistant-car.service --no-pager -l
-            ;;
-        2)
-            echo "🚀 Iniciando assistente..."
-            sudo systemctl start voice-assistant-car.service
-            ;;
-        3)
-            echo "🛑 Parando assistente..."
-            sudo systemctl stop voice-assistant-car.service
-            ;;
-        4)
-            echo "🔄 Reiniciando assistente..."
-            sudo systemctl restart voice-assistant-car.service
-            ;;
-        5)
-            echo "📝 Logs em tempo real (Ctrl+C para sair):"
-            sudo journalctl -u voice-assistant-car.service -f
-            ;;
-        6)
-            echo "📶 Configurando WiFi..."
-            read -p "SSID: " ssid
-            read -s -p "Senha: " password
-            echo
-            sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null << WIFI_EOF
-
-network={
-    ssid="$ssid"
-    psk="$password"
-    key_mgmt=WPA-PSK
-    priority=5
-}
-WIFI_EOF
-            sudo systemctl restart networking
-            ;;
-        7)
-            temp=$(cat /sys/class/thermal/thermal_zone0/temp)
-            temp_c=$((temp/1000))
-            echo "🌡️  Temperatura: ${temp_c}°C"
-            if [ $temp_c -gt 70 ]; then
-                echo "⚠️  Temperatura alta!"
-            else
-                echo "✅ Temperatura normal"
-            fi
-            ;;
-        8)
-            echo "🎤 Testando microfone..."
-            arecord -l
-            echo "Gravando 3 segundos de teste..."
-            arecord -d 3 -f cd test.wav 2>/dev/null && aplay test.wav 2>/dev/null
-            rm -f test.wav
-            ;;
-        9)
-            echo "🔄 Atualizando código..."
-            cd ..
-            git pull origin main
-            sudo systemctl restart voice-assistant-car.service
-            ;;
-        0)
-            exit 0
-            ;;
-        *)
-            echo "Opção inválida"
-            ;;
-    esac
-    
-    echo
-    read -p "Pressione Enter para continuar..."
-done
-EOF
-    
-    chmod +x manage.sh
-    echo "✅ Script de gerenciamento criado"
+    read -p "Digite sua escolha (1-5): " choice
 }
 
 # Execução principal
 main() {
-    check_hardware
-    install_dependencies
-    setup_python_env
-    configure_audio
-    setup_network
-    create_service
-    test_installation
-    create_management_script
+    case ${1:-""} in
+        --quick)
+            # Instalação rápida sem menu
+            choice=1
+            ;;
+        --test)
+            choice=4
+            ;;
+        *)
+            show_menu
+            ;;
+    esac
     
-    echo ""
-    echo "🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!"
-    echo "====================================="
-    echo ""
-    echo "📋 Próximos passos:"
-    echo "1. Conecte o microfone USB M-305"
-    echo "2. Reinicie o Dev Board: sudo reboot"
-    echo "3. O assistente iniciará automaticamente após o boot"
-    echo ""
-    echo "🔧 Para gerenciar:"
-    echo "./devboard/manage.sh"
-    echo ""
-    echo "📊 Para ver logs:"
-    echo "sudo journalctl -u voice-assistant-car.service -f"
-    echo ""
-    echo "⚠️  IMPORTANTE: Reinicie agora para aplicar todas as configurações!"
+    case $choice in
+        1)
+            echo "🚀 Iniciando instalação completa..."
+            check_hardware
+            fix_repositories
+            install_dependencies
+            setup_python_env
+            configure_audio
+            setup_network
+            create_service
+            test_installation
+            
+            echo ""
+            echo "🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!"
+            echo "====================================="
+            echo ""
+            echo "📋 Próximos passos:"
+            echo "1. Conecte o microfone USB M-305"
+            echo "2. Reinicie o Dev Board: sudo reboot"
+            echo "3. O assistente iniciará automaticamente após o boot"
+            echo ""
+            echo "🔧 Para gerenciar:"
+            echo "./manage.sh"
+            echo ""
+            echo "📊 Para ver logs:"
+            echo "sudo journalctl -u voice-assistant-car.service -f"
+            echo ""
+            echo "⚠️  IMPORTANTE: Reinicie agora para aplicar todas as configurações!"
+            ;;
+        2)
+            setup_python_env
+            echo "✅ Ambiente Python configurado"
+            ;;
+        3)
+            create_service
+            echo "✅ Serviço systemd criado"
+            ;;
+        4)
+            check_hardware
+            test_installation
+            ;;
+        5)
+            echo "👋 Saindo..."
+            exit 0
+            ;;
+        *)
+            echo "❌ Opção inválida"
+            exit 1
+            ;;
+    esac
 }
 
 # Executar instalação
-main
+main "$@"

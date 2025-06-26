@@ -2,6 +2,70 @@
 
 Soluções para problemas comuns na instalação e uso do assistente de voz no Dev Board.
 
+## 🚨 Problemas Críticos de Instalação
+
+### 1. ❌ Erro: `lsusb: command not found`
+
+**Causa**: Comando `lsusb` não está instalado no sistema.
+
+**Solução**:
+```bash
+# Instalar usbutils
+sudo apt install -y usbutils
+
+# OU verificar dispositivos USB alternativamente
+ls /dev/snd/
+cat /proc/asound/cards
+```
+
+### 2. 🔑 Erro de Chaves GPG
+
+**Sintoma**: 
+```
+The following signatures couldn't be verified because the public key is not available: NO_PUBKEY C0BA5CE6DC6315A3
+```
+
+**Soluções**:
+
+**Opção A - Corrigir chaves:**
+```bash
+# Adicionar chave do Google
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+# Atualizar repositórios
+sudo apt update
+```
+
+**Opção B - Instalar ignorando verificação (temporário):**
+```bash
+# Atualizar ignorando problemas de assinatura
+sudo apt update -o Acquire::AllowInsecureRepositories=true
+
+# Instalar pacotes específicos
+sudo apt install -y --allow-unauthenticated python3-pip python3-dev python3-venv
+```
+
+**Opção C - Continuar instalação:**
+```bash
+# O script foi atualizado para lidar com esses problemas automaticamente
+# Simplesmente execute novamente:
+./install.sh
+```
+
+### 3. 🌡️ Temperatura Alta (>70°C)
+
+**Causa**: Dev Board superaquecendo.
+
+**Soluções**:
+```bash
+# Verificar temperatura
+cat /sys/class/thermal/thermal_zone0/temp
+
+# Melhorar ventilação
+# Aguardar resfriamento
+# Considerar cooler adicional
+```
+
 ## 🚨 Problemas de Instalação
 
 ### ❌ "Não é um Dev Board"
