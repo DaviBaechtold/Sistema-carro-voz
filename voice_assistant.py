@@ -38,9 +38,16 @@ class VoiceAssistant:
         self.last_command_time = 0
         self.always_require_wake_word = True  # Sempre exigir wake word
         
+        # Detectar microfone M-305 especificamente
+        self.microphone_index = self.find_m305_microphone()
+        
         # Inicializar reconhecimento de voz
         self.recognizer = sr.Recognizer()
-        self.microphone = sr.Microphone()
+        if self.microphone_index is not None:
+            self.microphone = sr.Microphone(device_index=self.microphone_index)
+        else:
+            print("⚠️ M-305 não encontrado, usando microfone padrão")
+            self.microphone = sr.Microphone()
         
         # Inicializar síntese de voz
         with SuppressStderr():
@@ -120,13 +127,45 @@ class VoiceAssistant:
                         print(f"Voz feminina brasileira encontrada: {voice.name}")
                         break
         
+    def find_m305_microphone(self):
+        """Encontra o microfone M-305 especificamente"""
+        print("🔍 Procurando microfone M-305...")
+        
+        with SuppressStderr():
+            microphones = sr.Microphone.list_microphone_names()
+        
+        # Procurar por palavras-chave do M-305
+        m305_keywords = ['USB PnP Sound Device', 'M-305', 'USB Audio', 'Sound Device']
+        
+        for index, name in enumerate(microphones):
+            print(f"  {index}: {name}")
+            for keyword in m305_keywords:
+                if keyword.lower() in name.lower():
+                    print(f"✅ M-305 encontrado no índice {index}: {name}")
+                    return index
+        
+        print("❌ M-305 não encontrado automaticamente")
+        return None
+    
     def setup_microphone(self):
         """Configura e ajusta microfone"""
-        print("Configurando microfone M-305...")
+        if self.microphone_index is not None:
+            print(f"Configurando microfone M-305 (índice {self.microphone_index})...")
+        else:
+            print("Configurando microfone padrão...")
+            
         with SuppressStderr():
             with self.microphone as source:
-                # Ajustar para ruído ambiente
-                self.recognizer.adjust_for_ambient_noise(source, duration=2)
+                print("Ajustando para ruído ambiente... (aguarde 3 segundos)")
+                # Aumentar tempo de ajuste e diminuir threshold para microfones USB
+                self.recognizer.adjust_for_ambient_noise(source, duration=3)
+                
+                # Configurações específicas para microfone USB
+                self.recognizer.energy_threshold = max(300, self.recognizer.energy_threshold)
+                self.recognizer.dynamic_energy_threshold = True
+                self.recognizer.pause_threshold = 0.8
+                self.recognizer.phrase_threshold = 0.3
+                
                 print(f"Nível de ruído configurado: {self.recognizer.energy_threshold}")
     
     def speak(self, text):
@@ -342,24 +381,64 @@ def test_microphone():
     print("Testando microfone M-305...")
     print("Microfones disponíveis:")
     
+    # Encontrar M-305
+    microphone_index = None
+    m305_keywords = ['USB PnP Sound Device', 'M-305', 'USB Audio', 'Sound Device']
+    
     with SuppressStderr():
-        for index, name in enumerate(sr.Microphone.list_microphone_names()):
-            print(f"  {index}: {name}")
+        microphones = sr.Microphone.list_microphone_names()
+        
+    for index, name in enumerate(microphones):
+        print(f"  {index}: {name}")
+        for keyword in m305_keywords:
+            if keyword.lower() in name.lower():
+                microphone_index = index
+                print(f"✅ M-305 encontrado no índice {index}")
+                break
+    
+    if microphone_index is None:
+        print("❌ M-305 não encontrado. Usando microfone padrão.")
+        microphone = sr.Microphone()
+    else:
+        microphone = sr.Microphone(device_index=microphone_index)
     
     try:
         with SuppressStderr():
-            with sr.Microphone() as source:
-                print("Ajustando para ruído ambiente... (2 segundos)")
-                r.adjust_for_ambient_noise(source, duration=2)
-                print("Fale algo para testar:")
-                audio = r.listen(source, timeout=5)
+            with microphone as source:
+                print("Ajustando para ruído ambiente... (3 segundos)")
+                r.adjust_for_ambient_noise(source, duration=3)
                 
+                # Configurações otimizadas para USB
+                r.energy_threshold = max(300, r.energy_threshold)
+                r.dynamic_energy_threshold = True
+                r.pause_threshold = 0.8
+                r.phrase_threshold = 0.3
+                
+                print(f"Nível de ruído: {r.energy_threshold}")
+                print("Fale algo para testar (você tem 10 segundos):")
+                
+                audio = r.listen(source, timeout=10, phrase_time_limit=5)
+                
+            print("Processando áudio...")
             text = r.recognize_google(audio, language='pt-BR')
-            print(f"Texto reconhecido: {text}")
+            print(f"✅ Texto reconhecido: '{text}'")
             return True
         
+    except sr.WaitTimeoutError:
+        print("❌ Timeout: Nenhum áudio detectado. Verifique se o microfone está funcionando.")
+        print("💡 Dicas:")
+        print("   - Fale mais próximo do microfone")
+        print("   - Verifique se o microfone não está mudo")
+        print("   - Teste com: pulseaudio --check -v")
+        return False
+    except sr.UnknownValueError:
+        print("❌ Áudio detectado mas não foi possível reconhecer a fala")
+        print("💡 Dicas:")
+        print("   - Fale mais claramente")
+        print("   - Verifique se há muito ruído de fundo")
+        return False
     except Exception as e:
-        print(f"Erro no teste do microfone: {e}")
+        print(f"❌ Erro no teste do microfone: {e}")
         return False
 
 def test_voices():
