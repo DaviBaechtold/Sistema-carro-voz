@@ -51,8 +51,15 @@ class ArduinoMicrophone:
         self.is_recording = False
         time.sleep(0.1)  # Aguardar últimos dados
         
+        print(f"DEBUG: Buffer size: {len(self.buffer)} bytes")
+        
+        if len(self.buffer) < 1000:
+            print("❌ Buffer muito pequeno, não há áudio suficiente")
+            return None
+        
         # Converter buffer para WAV
         audio_data = np.frombuffer(self.buffer, dtype=np.int16)
+        print(f"DEBUG: Audio samples: {len(audio_data)}")
         
         # Criar arquivo WAV temporário
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
@@ -61,6 +68,8 @@ class ArduinoMicrophone:
                 wav_file.setsampwidth(2)
                 wav_file.setframerate(16000)
                 wav_file.writeframes(audio_data.tobytes())
+            
+            print(f"DEBUG: WAV file created: {tmp_file.name}")
             
             # Ler como AudioData para speech_recognition
             with sr.AudioFile(tmp_file.name) as source:
@@ -71,6 +80,9 @@ class ArduinoMicrophone:
     
     def receive_loop(self):
         """Loop para receber dados continuamente"""
+        print("DEBUG: Receive loop started")
+        bytes_received = 0
+        
         while True:
             try:
                 if self.use_wifi:
@@ -84,6 +96,9 @@ class ArduinoMicrophone:
                 
                 if self.is_recording and data:
                     self.buffer.extend(data)
+                    bytes_received += len(data)
+                    if bytes_received % 16000 == 0:  # A cada ~1 segundo
+                        print(f"DEBUG: Recebidos {bytes_received} bytes")
                     
             except Exception as e:
                 print(f"Erro na recepção: {e}")
@@ -162,6 +177,10 @@ class VoiceAssistant:
             time.sleep(5)
             audio = self.arduino_mic.stop_recording()
             
+            if audio is None:
+                print("❌ Nenhum áudio capturado")
+                return None
+            
             # Reconhecer
             full_command = self.recognizer.recognize_google(audio, language='pt-BR')
             full_command_lower = full_command.lower()
@@ -176,8 +195,16 @@ class VoiceAssistant:
                     
             return None
             
+        except sr.UnknownValueError:
+            print("❌ Não entendi o áudio")
+            return None
+        except sr.RequestError as e:
+            print(f"❌ Erro no Google Speech: {e}")
+            return None
         except Exception as e:
-            print(f"Erro: {e}")
+            print(f"❌ Erro: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def process_command(self, command):
