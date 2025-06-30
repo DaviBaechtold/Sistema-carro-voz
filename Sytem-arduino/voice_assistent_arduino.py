@@ -19,7 +19,7 @@ import tempfile
 # Configurações
 USE_WIFI = True  # True=WiFi, False=Serial
 WIFI_PORT = 5555
-SERIAL_PORT = '/dev/ttyUSB0'  # Ajustar conforme necessário
+SERIAL_PORT = '/dev/ttyACM0'  # Ajustar conforme necessário
 SERIAL_BAUD = 115200
 
 class ArduinoMicrophone:
