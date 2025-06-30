@@ -1,89 +1,85 @@
-# 🚗 Assistente de Voz para Carro
+# 🚗 Assistente de Voz para Carro - Google Dev Board
 
-Um sistema de assistente de voz inteligente desenvolvido para uso automotivo, com comandos em português brasileiro. O objetivo é permitir controle por voz de funções do carro ou de sistemas embarcados, tornando a experiência de direção mais segura e prática.
+Sistema de assistente de voz em português brasileiro para uso automotivo, desenvolvido para Google Dev Board (AA1).
 
-## Funcionalidades
-- **Reconhecimento de voz**: Ativado por wake word (ex: "ok google", "assistente", "carro").
-- **Respostas por voz**: Utiliza síntese de voz natural (TTS).
-- **Comandos otimizados para carro**: Foco em comandos úteis durante a direção.
-- **Fácil instalação**: Scripts automáticos para configuração e execução.
+## 📦 Sistemas Disponíveis
 
-## Estrutura do Projeto
-```
-Sistem-mic/
-├── requirements.txt        # Dependências Python
-├── run.sh                 # Inicialização rápida do assistente
-├── setup.sh               # Configuração completa do ambiente
-└── voice_assistant.py      # Código principal do assistente de voz
-```
+### 1. Sistema com Microfone USB (M-305)
+- **Uso:** Microfone USB conectado diretamente ao Dev Board
+- **Vantagem:** Configuração simples, plug-and-play
+- **Ideal para:** Instalação fixa no carro
+- **Arquivos:** `voice_assistant.py`, `setup.sh`
 
-## Instalação e Uso
+### 2. Sistema com Arduino como Microfone
+- **Uso:** Arduino Nano RP2040 captura áudio e envia ao Dev Board
+- **Vantagem:** Microfone remoto sem fio (WiFi) ou USB
+- **Ideal para:** Flexibilidade de posicionamento, múltiplos microfones
+- **Arquivos:** `voice_assistant_arduino.py`, `setup_arduino.sh`, `arduino_microphone.ino`
 
-1. **Configuração inicial**
-   ```bash
-   cd Sistem-mic
-   ./setup.sh
-   ```
-   O script `setup.sh` instala dependências do sistema, Python, bibliotecas de áudio e prepara o ambiente virtual.
+## 🎯 Funcionalidades
 
-2. **Executar o assistente**
-   ```bash
-   ./run.sh
-   ```
-   O script ativa o ambiente virtual e inicia o assistente de voz.
+Ambos os sistemas oferecem:
 
-## Dependências
-- Python 3.8+
-- [SpeechRecognition](https://pypi.org/project/SpeechRecognition/)
-- [PyAudio](https://pypi.org/project/PyAudio/)
-- [pyttsx3](https://pypi.org/project/pyttsx3/)
+- ✅ Reconhecimento de voz em português brasileiro
+- ✅ Wake words: "Assistente", "OK Google", "Hey Google", "Carro"
+- ✅ Comandos para: chamadas, música, navegação, mensagens
+- ✅ Síntese de voz natural em português
+- ✅ Auto-inicialização com o sistema
 
-## Inicialização automática como serviço (systemd)
+## 🚀 Início Rápido
 
-Para que o assistente inicie automaticamente ao ligar o sistema (ex: Google Dev Board ou Linux embarcado):
-
-1. Copie o arquivo `voice-assistant.service` para o diretório de serviços do systemd:
-   ```bash
-   sudo nano /etc/systemd/system/voice-assistant.service
-   # Cole o conteúdo do arquivo e salve
-   ```
-2. Ative o serviço para inicializar automaticamente:
-   ```bash
-   sudo systemctl enable voice-assistant.service
-   sudo systemctl start voice-assistant.service
-   ```
-
-Assim, o assistente será iniciado automaticamente após o boot.
-
-## Opção 2: Usando Arduino Nano 2040 Connect como Microfone
-
-Agora o projeto também suporta o uso de dois Arduinos Nano 2040 Connect como microfones remotos. O áudio capturado pelo Arduino é enviado para o Dev Board (ou outro sistema Linux), que executa todo o processamento de voz normalmente.
-
-### Estrutura da solução Arduino
-```
-Sytem-arduino/
-├── arduino-microphone.ino         # Código para Arduino Nano 2040 Connect (envio de áudio)
-├── requirements_arduino.txt       # Dependências Python para integração
-├── setup_arduino.sh               # Script de configuração para uso com Arduino
-└── voice_assistent_arduino.py     # Código Python para receber/processar áudio do Arduino
+### Sistema USB
+```bash
+ssh mendel@IP_DO_DEVBOARD
+git clone https://github.com/DaviBaechtold/Sistema-carro-voz.git
+cd Sistema-carro-voz
+./setup.sh  # Escolha opção 1
 ```
 
-### Como usar com Arduino
-1. Grave o `arduino-microphone.ino` nos Arduinos Nano 2040 Connect.
-2. No Dev Board/Linux, execute:
-   ```bash
-   cd Sytem-arduino
-   ./setup_arduino.sh
-   ```
-3. Siga o menu para testar a conexão e rodar o assistente usando o áudio vindo do Arduino (por WiFi ou Serial).
+### Sistema Arduino
+```bash
+# No Dev Board
+cd Sistema-carro-voz
+./setup_arduino.sh  # Escolha opção 1
 
-> O restante do processamento de voz, comandos e respostas continua igual ao modo tradicional.
+# No Arduino IDE
+# Upload do sketch arduino_microphone.ino
+```
 
-## Observações
-- Recomendado para sistemas Linux (testado em Ubuntu/Debian).
-- Otimizado para Google Dev Board (AA1) com microfone M-305, mas funciona em qualquer PC Linux com microfone.
+## 📋 Comandos de Exemplo
 
-## Licença
-Consulte o arquivo LICENSE para detalhes.
+- `"Assistente, tocar música"`
+- `"OK Google, ligar para João"`
+- `"Carro, navegar para casa"`
+- `"Hey Google, aumentar volume"`
 
+## 🔧 Requisitos
 
+- Google Dev Board (AA1)
+- Microfone USB M-305 **OU** Arduino Nano RP2040 Connect
+- Conexão com internet
+- Python 3.7.3+
+
+## 📖 Documentação Detalhada
+
+- `README_USB.md` - Guia completo sistema USB
+- `README_ARDUINO.md` - Guia completo sistema Arduino
+- Wiki do projeto para tutoriais avançados
+
+## 📱 Escolhendo o Sistema
+
+| Característica | USB M-305 | Arduino |
+|----------------|-----------|---------|
+| Instalação | ⭐⭐⭐⭐⭐ Muito fácil | ⭐⭐⭐ Média |
+| Custo | ⭐⭐⭐⭐ Baixo (~$10) | ⭐⭐ Médio (~$40) |
+| Flexibilidade | ⭐⭐ Fixa | ⭐⭐⭐⭐⭐ Remota |
+| Qualidade | ⭐⭐⭐⭐ Boa | ⭐⭐⭐ Boa |
+| Múltiplos mics | ❌ Não | ✅ Sim |
+
+## 🤝 Contribuindo
+
+Pull requests são bem-vindos! Para mudanças maiores, abra uma issue primeiro.
+
+## 📄 Licença
+
+MIT License - veja LICENSE para detalhes.
