@@ -70,6 +70,9 @@ class ArduinoMicrophone:
             # Converter para array numpy
             samples = np.frombuffer(audio_data, dtype=np.int16)
             
+            # Amplificar sinal fraco do PDM
+            samples = samples * 4
+            
             # Verificar se há sinal
             if np.max(np.abs(samples)) < 100:
                 print("Erro: Sem sinal de áudio")
@@ -135,8 +138,9 @@ class VoiceAssistant:
         
         # Reconhecimento e síntese
         self.recognizer = sr.Recognizer()
-        self.recognizer.energy_threshold = 300  # Ajustar sensibilidade
+        self.recognizer.energy_threshold = 50  # Reduzir para PDM com baixa amplitude
         self.recognizer.pause_threshold = 0.8
+        self.recognizer.dynamic_energy_threshold = False
         
         self.tts = pyttsx3.init()
         self.setup_tts()
