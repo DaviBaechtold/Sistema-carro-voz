@@ -6,28 +6,28 @@ import pyttsx3
 import time
 import threading
 import os
-import re
-import warnings
-import sys
 import socket
 import serial
 import numpy as np
-import io
 import wave
 import tempfile
+import struct
 
 # Configurações
-USE_WIFI = True  # True=WiFi, False=Serial
+USE_WIFI = True
 WIFI_PORT = 5555
-SERIAL_PORT = '/dev/ttyACM0'  # Ajustar conforme necessário
+SERIAL_PORT = '/dev/ttyACM0'
 SERIAL_BAUD = 115200
+SAMPLE_RATE = 16000
+CHANNELS = 1
+SAMPLE_WIDTH = 2  # 16-bit
 
 class ArduinoMicrophone:
-    """Classe para receber áudio do Arduino"""
     def __init__(self, use_wifi=True):
         self.use_wifi = use_wifi
         self.buffer = bytearray()
         self.is_recording = False
+        self.lock = threading.Lock()
         
         if use_wifi:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,52 +38,84 @@ class ArduinoMicrophone:
             self.conn, self.addr = self.sock.accept()
             print(f"Arduino conectado de {self.addr}")
         else:
-            self.ser = serial.Serial(SERIAL_PORT, SERIAL_BAUD)
+            self.ser = serial.Serial(SERIAL_PORT, SERIAL_BAUD, timeout=0.1)
+            self.ser.reset_input_buffer()
             print(f"Serial conectada em {SERIAL_PORT}")
+            time.sleep(2)  # Aguardar Arduino inicializar
     
     def start_recording(self):
-        """Inicia gravação"""
-        self.buffer.clear()
-        self.is_recording = True
+        with self.lock:
+            self.buffer.clear()
+            self.is_recording = True
+        print("Gravação iniciada")
         
     def stop_recording(self):
-        """Para gravação e retorna áudio WAV"""
         self.is_recording = False
-        time.sleep(0.1)  # Aguardar últimos dados
+        time.sleep(0.2)  # Aguardar últimos dados
         
-        # Converter buffer para WAV
-        audio_data = np.frombuffer(self.buffer, dtype=np.int16)
+        with self.lock:
+            audio_data = self.buffer.copy()
         
-        # Criar arquivo WAV temporário
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
-            with wave.open(tmp_file.name, 'wb') as wav_file:
-                wav_file.setnchannels(1)
-                wav_file.setsampwidth(2)
-                wav_file.setframerate(16000)
-                wav_file.writeframes(audio_data.tobytes())
+        print(f"Buffer size: {len(audio_data)} bytes")
+        
+        if len(audio_data) < 1000:  # Mínimo de dados
+            print("Erro: Buffer muito pequeno")
+            return None
+        
+        # Garantir que temos número par de bytes
+        if len(audio_data) % 2 != 0:
+            audio_data = audio_data[:-1]
+        
+        try:
+            # Converter para array numpy
+            samples = np.frombuffer(audio_data, dtype=np.int16)
             
-            # Ler como AudioData para speech_recognition
-            with sr.AudioFile(tmp_file.name) as source:
-                audio = sr.Recognizer().record(source)
+            # Verificar se há sinal
+            if np.max(np.abs(samples)) < 100:
+                print("Erro: Sem sinal de áudio")
+                return None
             
-            os.unlink(tmp_file.name)
-            return audio
+            # Criar WAV temporário
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+                with wave.open(tmp_file.name, 'wb') as wav_file:
+                    wav_file.setnchannels(CHANNELS)
+                    wav_file.setsampwidth(SAMPLE_WIDTH)
+                    wav_file.setframerate(SAMPLE_RATE)
+                    wav_file.writeframes(samples.tobytes())
+                
+                # Ler como AudioData
+                with sr.AudioFile(tmp_file.name) as source:
+                    audio = sr.Recognizer().record(source)
+                
+                os.unlink(tmp_file.name)
+                return audio
+                
+        except Exception as e:
+            print(f"Erro ao processar áudio: {e}")
+            return None
     
     def receive_loop(self):
-        """Loop para receber dados continuamente"""
+        print("Thread de recepção iniciada")
         while True:
             try:
                 if self.use_wifi:
                     data = self.conn.recv(1024)
+                    if not data:
+                        print("Conexão WiFi perdida")
+                        break
                 else:
-                    if self.ser.in_waiting:
+                    if self.ser.in_waiting > 0:
                         data = self.ser.read(self.ser.in_waiting)
                     else:
-                        time.sleep(0.01)
+                        time.sleep(0.001)
                         continue
                 
                 if self.is_recording and data:
-                    self.buffer.extend(data)
+                    with self.lock:
+                        self.buffer.extend(data)
+                        # Debug: mostrar progresso
+                        if len(self.buffer) % 16000 == 0:
+                            print(f"Recebido: {len(self.buffer)} bytes")
                     
             except Exception as e:
                 print(f"Erro na recepção: {e}")
@@ -91,10 +123,9 @@ class ArduinoMicrophone:
 
 class VoiceAssistant:
     def __init__(self):
-        # Wake words
         self.wake_words = ['ok google', 'hey google', 'assistente', 'carro']
         
-        # Inicializar Arduino como microfone
+        # Inicializar Arduino
         self.arduino_mic = ArduinoMicrophone(use_wifi=USE_WIFI)
         
         # Thread para receber dados
@@ -104,39 +135,20 @@ class VoiceAssistant:
         
         # Reconhecimento e síntese
         self.recognizer = sr.Recognizer()
+        self.recognizer.energy_threshold = 300  # Ajustar sensibilidade
+        self.recognizer.pause_threshold = 0.8
+        
         self.tts = pyttsx3.init()
         self.setup_tts()
         
-        # Comandos
+        # Comandos (simplificado para teste)
         self.commands = {
-            'ligar para': self.make_call,
-            'atender': self.answer_call,
-            'desligar chamada': self.end_call,
-            'discagem': self.speed_dial,
-            'tocar música': self.play_music,
-            'tocar': self.play_specific,
-            'aumentar volume': self.volume_up,
-            'diminuir volume': self.volume_down,
-            'próxima': self.next_track,
-            'anterior': self.previous_track,
-            'navegar para': self.navigate_to,
-            'rotas alternativas': self.alternative_routes,
-            'onde estou': self.current_location,
-            'cancelar rota': self.cancel_route,
-            'enviar mensagem': self.send_message,
-            'última mensagem': self.read_last_message,
-            'ler mensagem': self.read_message,
-            'ajuda': self.help,
-            'status': self.status
+            'teste': lambda: self.speak("Teste OK"),
+            'status': lambda: self.speak("Sistema funcionando"),
         }
         
-        self.is_listening = False
-        
     def setup_tts(self):
-        """Configura síntese de voz"""
         voices = self.tts.getProperty('voices')
-        
-        # Procurar voz em português
         for voice in voices:
             if 'brazil' in voice.name.lower() or 'pt' in voice.name.lower():
                 self.tts.setProperty('voice', voice.id)
@@ -147,153 +159,95 @@ class VoiceAssistant:
         self.tts.setProperty('volume', 0.85)
     
     def speak(self, text):
-        """Fala o texto"""
         print(f"Assistente: {text}")
         self.tts.say(text)
         self.tts.runAndWait()
     
-    def listen_for_wake_word_and_command(self):
-        """Escuta comando via Arduino"""
+    def listen_for_command(self):
         try:
-            print("🎤 Escutando...")
+            print("\n🎤 Escutando...")
             
-            # Gravar por 5 segundos
+            # Gravar por tempo fixo
             self.arduino_mic.start_recording()
-            time.sleep(5)
+            time.sleep(4)  # 4 segundos de gravação
             audio = self.arduino_mic.stop_recording()
             
-            # Reconhecer
-            full_command = self.recognizer.recognize_google(audio, language='pt-BR')
-            full_command_lower = full_command.lower()
-            print(f"Você disse: {full_command}")
+            if audio is None:
+                print("Erro: Sem áudio capturado")
+                return None
             
-            # Verificar wake word
-            for wake_word in self.wake_words:
-                if wake_word in full_command_lower:
-                    command = full_command_lower.replace(wake_word, '').strip()
-                    command = re.sub(r'^[,.\s]+', '', command)
-                    return command if command else None
-                    
-            return None
-            
+            # Tentar reconhecer
+            try:
+                text = self.recognizer.recognize_google(audio, language='pt-BR')
+                print(f"Você disse: {text}")
+                return text.lower()
+            except sr.UnknownValueError:
+                print("Não entendi o áudio")
+                return None
+            except sr.RequestError as e:
+                print(f"Erro no serviço: {e}")
+                return None
+                
         except Exception as e:
-            print(f"Erro: {e}")
+            print(f"Erro geral: {e}")
             return None
     
-    def process_command(self, command):
-        """Processa comando"""
-        if not command:
+    def process_command(self, text):
+        if not text:
             return
             
-        for keyword, action in self.commands.items():
-            if keyword in command:
-                if keyword in ['ligar para', 'tocar', 'navegar para', 'enviar mensagem', 'discagem']:
-                    action(command)
-                else:
-                    action()
-                return
+        # Verificar wake words
+        for wake_word in self.wake_words:
+            if wake_word in text:
+                command = text.replace(wake_word, '').strip()
                 
-        self.speak("Comando não reconhecido.")
+                # Processar comando
+                for key, action in self.commands.items():
+                    if key in command:
+                        action()
+                        return
+                        
+                self.speak("Comando não reconhecido")
+                return
     
-    # === COMANDOS (mesmo código do original) ===
-    def make_call(self, command):
-        contact = command.replace('ligar para', '').strip()
-        if contact:
-            self.speak(f"Ligando para {contact}")
+    def test_audio_input(self):
+        """Teste básico de entrada de áudio"""
+        print("\n=== TESTE DE ÁUDIO ===")
+        print("Gravando 2 segundos de teste...")
+        
+        self.arduino_mic.start_recording()
+        time.sleep(2)
+        audio = self.arduino_mic.stop_recording()
+        
+        if audio:
+            print("✅ Áudio capturado com sucesso")
+            # Salvar para debug
+            with open("test_audio.wav", "wb") as f:
+                f.write(audio.get_wav_data())
+            print("Áudio salvo em test_audio.wav")
         else:
-            self.speak("Para quem você quer ligar?")
-    
-    def answer_call(self):
-        self.speak("Atendendo chamada")
-    
-    def end_call(self):
-        self.speak("Chamada encerrada")
-    
-    def speed_dial(self, command):
-        numbers = re.findall(r'\d+', command)
-        if numbers:
-            number = ''.join(numbers)
-            self.speak(f"Discando para {number}")
-        else:
-            self.speak("Qual número você quer discar?")
-    
-    def play_music(self):
-        self.speak("Reproduzindo música")
-    
-    def play_specific(self, command):
-        content = command.replace('tocar', '').strip()
-        if content:
-            self.speak(f"Tocando {content}")
-        else:
-            self.speak("O que você quer ouvir?")
-    
-    def volume_up(self):
-        self.speak("Aumentando volume")
-    
-    def volume_down(self):
-        self.speak("Diminuindo volume")
-    
-    def next_track(self):
-        self.speak("Próxima música")
-    
-    def previous_track(self):
-        self.speak("Música anterior")
-    
-    def navigate_to(self, command):
-        destination = command.replace('navegar para', '').strip()
-        if destination:
-            self.speak(f"Navegando para {destination}")
-        else:
-            self.speak("Para onde você quer ir?")
-    
-    def alternative_routes(self):
-        self.speak("Mostrando rotas alternativas")
-    
-    def current_location(self):
-        self.speak("Você está na Avenida Principal, número 123")
-    
-    def cancel_route(self):
-        self.speak("Rota cancelada")
-    
-    def send_message(self, command):
-        contact = command.replace('enviar mensagem para', '').strip()
-        if contact:
-            self.speak(f"Enviando mensagem para {contact}. Dite sua mensagem")
-        else:
-            self.speak("Para quem você quer enviar mensagem?")
-    
-    def read_last_message(self):
-        self.speak("Última mensagem de João: Chegando em 10 minutos")
-    
-    def read_message(self):
-        self.speak("Você tem 2 mensagens não lidas")
-    
-    def status(self):
-        self.speak("Sistema funcionando. Arduino conectado.")
-    
-    def help(self):
-        self.speak("Diga 'Assistente' seguido de: tocar música, ligar para alguém, navegar para destino, ou ajuda.")
+            print("❌ Falha na captura de áudio")
     
     def start_listening(self):
-        """Loop principal"""
-        self.speak("Assistente com Arduino iniciado.")
-        self.is_listening = True
+        self.speak("Sistema iniciado")
         
-        while self.is_listening:
+        # Teste inicial
+        self.test_audio_input()
+        
+        while True:
             try:
-                print("\n⏳ Aguardando comando...")
-                command = self.listen_for_wake_word_and_command()
-                
-                if command:
-                    self.process_command(command)
+                text = self.listen_for_command()
+                if text:
+                    self.process_command(text)
                     
-                    if any(word in command for word in ['tchau', 'parar', 'encerrar']):
+                    if any(word in text for word in ['sair', 'tchau', 'parar']):
+                        self.speak("Encerrando")
                         break
                         
             except KeyboardInterrupt:
                 break
             except Exception as e:
-                print(f"Erro: {e}")
+                print(f"Erro no loop: {e}")
                 time.sleep(1)
 
 if __name__ == "__main__":
@@ -305,3 +259,5 @@ if __name__ == "__main__":
         assistant.start_listening()
     except Exception as e:
         print(f"Erro fatal: {e}")
+        import traceback
+        traceback.print_exc()
