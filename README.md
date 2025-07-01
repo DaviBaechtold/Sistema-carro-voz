@@ -8,13 +8,13 @@ Sistema de assistente de voz em português brasileiro para uso automotivo, desen
 - **Uso:** Microfone USB conectado diretamente ao Dev Board
 - **Vantagem:** Configuração simples, plug-and-play
 - **Ideal para:** Instalação fixa no carro
-- **Arquivos:** `voice_assistant.py`, `setup.sh`
+- **Arquivos:** `System-mic/voice_assistant.py`, `System-mic/setup.sh`, `System-mic/run.sh`, `System-mic/requirements.txt`
 
 ### 2. Sistema com Arduino como Microfone
 - **Uso:** Arduino Nano RP2040 captura áudio e envia ao Dev Board
 - **Vantagem:** Microfone remoto sem fio (WiFi) ou USB
 - **Ideal para:** Flexibilidade de posicionamento, múltiplos microfones
-- **Arquivos:** `voice_assistant_arduino.py`, `setup_arduino.sh`, `arduino_microphone.ino`
+- **Arquivos:** `System-arduino/voice_assistant_arduino.py`, `System-arduino/setup_arduino.sh`, `System-arduino/arduino-microphone.ino`, `System-arduino/requirements_arduino.txt`
 
 ## 🎯 Funcionalidades
 
@@ -28,30 +28,32 @@ Ambos os sistemas oferecem:
 
 ## 🚀 Início Rápido
 
-### Sistema USB
+### Sistema USB (pasta System-mic)
 ```bash
 ssh mendel@IP_DO_DEVBOARD
 git clone https://github.com/DaviBaechtold/Sistema-carro-voz.git
-cd Sistema-carro-voz
+cd Sistema-carro-voz/System-mic
+chmod +x setup.sh
 ./setup.sh  # Escolha opção 1
 ```
 
-### Sistema Arduino
+### Sistema Arduino (pasta System-arduino)
 ```bash
 # No Dev Board
-cd Sistema-carro-voz
+cd Sistema-carro-voz/System-arduino
+chmod +x setup_arduino.sh
 ./setup_arduino.sh  # Escolha opção 1
 
 # No Arduino IDE
-# Upload do sketch arduino_microphone.ino
+# Upload do sketch arduino-microphone.ino
 ```
 
 ## 📋 Comandos de Exemplo
 
-- `"Assistente, tocar música"`
-- `"OK Google, ligar para João"`
-- `"Carro, navegar para casa"`
-- `"Hey Google, aumentar volume"`
+- "Assistente, tocar música"
+- "OK Google, ligar para João"
+- "Carro, navegar para casa"
+- "Hey Google, aumentar volume"
 
 ## 🔧 Requisitos
 
@@ -62,8 +64,8 @@ cd Sistema-carro-voz
 
 ## 📖 Documentação Detalhada
 
-- `README_USB.md` - Guia completo sistema USB
-- `README_ARDUINO.md` - Guia completo sistema Arduino
+- `System-mic/README_USB.md` - Guia completo sistema USB
+- `System-arduino/README_ARDUINO.md` - Guia completo sistema Arduino
 - Wiki do projeto para tutoriais avançados
 
 ## 📱 Escolhendo o Sistema

@@ -1,6 +1,8 @@
 # 🎙️ Assistente de Voz - Arduino como Microfone
 
-Sistema de assistente de voz usando Arduino Nano 2040 Connect como microfone remoto para o Google Dev Board.
+Sistema de assistente de voz usando Arduino Nano RP2040 Connect como microfone remoto para o Google Dev Board.
+
+> **Este guia refere-se ao sistema Arduino. Execute todos os comandos dentro da pasta `System-arduino/` do projeto.**
 
 ## 📋 Requisitos
 
@@ -34,7 +36,7 @@ Sistema de assistente de voz usando Arduino Nano 2040 Connect como microfone rem
 
 2. **Configure o código Arduino:**
 ```cpp
-// Editar no arduino_microphone.ino:
+// Editar no arduino-microphone.ino:
 const char* ssid = "SEU_WIFI";
 const char* password = "SUA_SENHA";
 const char* devboard_ip = "IP_DO_DEVBOARD";
@@ -54,8 +56,9 @@ const char* devboard_ip = "IP_DO_DEVBOARD";
 ssh mendel@IP_DO_DEVBOARD
 
 # Clonar repositório
+# (Se ainda não tiver clonado)
 git clone https://github.com/DaviBaechtold/Sistema-carro-voz.git
-cd Sistema-carro-voz
+cd Sistema-carro-voz/System-arduino
 
 # Dar permissão aos scripts
 chmod +x setup_arduino.sh
@@ -108,9 +111,10 @@ chmod +x setup_arduino.sh
 ### Comandos de Voz
 
 Mesmo formato do sistema USB:
-- `"Assistente, tocar música"`
-- `"OK Google, ligar para João"`
-- `"Carro, navegar para casa"`
+- "Assistente, tocar música"
+- "OK Google, ligar para João"
+- "Carro, navegar para casa"
+- "Hey Google, aumentar volume"
 
 ### LED de Status no Arduino
 
@@ -230,8 +234,8 @@ After=network.target
 [Service]
 Type=simple
 User=mendel
-WorkingDirectory=/home/mendel/Sistema-carro-voz
-ExecStart=/home/mendel/Sistema-carro-voz/venv/bin/python /home/mendel/Sistema-carro-voz/voice_assistant_arduino.py
+WorkingDirectory=/home/mendel/Sistema-carro-voz/System-arduino
+ExecStart=/home/mendel/Sistema-carro-voz/System-arduino/venv/bin/python /home/mendel/Sistema-carro-voz/System-arduino/voice_assistant_arduino.py
 Restart=always
 RestartSec=30
 

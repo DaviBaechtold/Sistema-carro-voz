@@ -2,6 +2,8 @@
 
 Sistema de assistente de voz para carro usando Google Dev Board (AA1) com microfone USB M-305.
 
+> **Este guia refere-se ao sistema USB. Execute todos os comandos dentro da pasta `System-mic/` do projeto.**
+
 ## 📋 Requisitos
 
 - Google Dev Board (AA1)
@@ -19,7 +21,7 @@ ssh mendel@IP_DO_DEVBOARD
 2. **Clone o repositório:**
 ```bash
 git clone https://github.com/DaviBaechtold/Sistema-carro-voz.git
-cd Sistema-carro-voz
+cd Sistema-carro-voz/System-mic
 ```
 
 3. **Execute o setup:**
@@ -62,9 +64,9 @@ After=network.target sound.target
 [Service]
 Type=simple
 User=mendel
-WorkingDirectory=/home/mendel/Sistema-carro-voz
-Environment="PATH=/home/mendel/Sistema-carro-voz/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-ExecStart=/home/mendel/Sistema-carro-voz/venv/bin/python /home/mendel/Sistema-carro-voz/voice_assistant.py
+WorkingDirectory=/home/mendel/Sistema-carro-voz/System-mic
+Environment="PATH=/home/mendel/Sistema-carro-voz/System-mic/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/home/mendel/Sistema-carro-voz/System-mic/venv/bin/python /home/mendel/Sistema-carro-voz/System-mic/voice_assistant.py
 Restart=always
 RestartSec=10
 
@@ -84,10 +86,10 @@ sudo systemctl start voice-assistant.service
 
 Fale a **wake word** + **comando** na mesma frase:
 
-- `"Assistente, tocar música"`
-- `"OK Google, ligar para João"`
-- `"Carro, navegar para casa"`
-- `"Hey Google, aumentar volume"`
+- "Assistente, tocar música"
+- "OK Google, ligar para João"
+- "Carro, navegar para casa"
+- "Hey Google, aumentar volume"
 
 ### Wake Words Disponíveis
 - Assistente
@@ -175,7 +177,7 @@ sudo systemctl restart voice-assistant
 
 ### Atualizar código
 ```bash
-cd ~/Sistema-carro-voz
+cd ~/Sistema-carro-voz/System-mic
 git pull
 sudo systemctl restart voice-assistant
 ```
