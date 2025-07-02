@@ -28,7 +28,22 @@ Ambos os sistemas oferecem:
 
 ## 🚀 Início Rápido
 
-### Sistema USB (pasta System-mic)
+### 1. Configurando o PC para acessar o Dev Board
+
+Antes de instalar o sistema, conecte o Dev Board à sua rede e configure o acesso SSH pelo seu computador:
+
+- Siga o guia oficial: [Coral Dev Board - Getting Started](https://coral.ai/docs/dev-board/get-started/#connect-internet)
+- Resumo dos passos:
+  1. Conecte o Dev Board ao PC via USB-C.
+  2. Instale drivers se necessário (veja o guia).
+  3. Acesse o console serial (screen, PuTTY, minicom, etc) para configurar WiFi ou Ethernet.
+  4. Descubra o IP do Dev Board (`hostname -I` no terminal do Dev Board).
+  5. Teste o acesso SSH:
+     ```bash
+     ssh mendel@IP_DO_DEVBOARD
+     ```
+
+### 2. Instalação do Sistema USB (pasta System-mic)
 ```bash
 ssh mendel@IP_DO_DEVBOARD
 git clone https://github.com/DaviBaechtold/Sistema-carro-voz.git
@@ -37,7 +52,7 @@ chmod +x setup.sh
 ./setup.sh  # Escolha opção 1
 ```
 
-### Sistema Arduino (pasta System-arduino)
+### 3. Instalação do Sistema Arduino (pasta System-arduino)
 ```bash
 # No Dev Board
 cd Sistema-carro-voz/System-arduino
@@ -77,10 +92,6 @@ chmod +x setup_arduino.sh
 | Flexibilidade | ⭐⭐ Fixa | ⭐⭐⭐⭐⭐ Remota |
 | Qualidade | ⭐⭐⭐⭐ Boa | ⭐⭐⭐ Boa |
 | Múltiplos mics | ❌ Não | ✅ Sim |
-
-## 🤝 Contribuindo
-
-Pull requests são bem-vindos! Para mudanças maiores, abra uma issue primeiro.
 
 ## 📄 Licença
 
